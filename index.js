@@ -111,7 +111,7 @@ exports.handler = async () => {
     await main();
     return { "statusCode": 200 };
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
     return { "statusCode": 500, body: error.message };
   }
 }
