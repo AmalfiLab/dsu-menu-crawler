@@ -31,15 +31,7 @@ function applyUrlTemplate(template, startDate, endDate) {
     .replace('${END}', `${eDay}.${eMonth}.${eYear}`));
 }
 
-function getMenuLinks() {
-  const now = new Date();
-  const nowDay = now.getDay();
-
-  const startDate = new Date(
-    now.getFullYear(), now.getMonth(), now.getDate() - nowDay + 1);
-  const endDate = new Date(
-    now.getFullYear(), now.getMonth(), now.getDate() - nowDay + 7);
-  
+function getMenuLinks(startDate, endDate) {  
   return {
     martiri: applyUrlTemplate(urlTemplates.martiri, startDate, endDate)
   };
@@ -69,11 +61,25 @@ async function updateDatabase(menu) {
       if (err) reject(err);
       else resolve(data);
     });
-  })
+  });
+}
+
+function getStartEndDates() {
+  const now = new Date();
+  const nowDay = now.getUTCDay();
+
+  let startDate = new Date(
+    now.getFullYear(), now.getMonth(), now.getDate() - nowDay + 1);
+  let endDate = new Date(
+    now.getFullYear(), now.getMonth(), now.getDate() - nowDay + 7);
+  startDate.setMinutes(startDate.getMinutes() - startDate.getTimezoneOffset());
+  endDate.setMinutes(endDate.getMinutes() - endDate.getTimezoneOffset());
+  return { startDate, endDate };
 }
 
 async function main() {
-  const { martiri: martiriUrl } = getMenuLinks();
+  const { startDate, endDate } = getStartEndDates();
+  const { martiri: martiriUrl } = getMenuLinks(startDate, endDate);
   console.log("martiri url", martiriUrl);
   const buffer = await downloadPdf(martiriUrl);
   const parser = new MenuParser(buffer, options.martiri)
