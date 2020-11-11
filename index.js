@@ -60,7 +60,7 @@ async function updateDatabase(menu) {
     UpdateExpression: "set menu = :m, updatedAt = :d",
     ExpressionAttributeValues: {
       ":m": menu,
-      ":d": Date.now()
+      ":d": (new Date()).toISOString()
     }
   };
 
@@ -78,15 +78,20 @@ async function main() {
   const buffer = await downloadPdf(martiriUrl);
   const parser = new MenuParser(buffer, options.martiri)
 
-  const days = [
-    "monday", "thursday", "wednesday",
-    "tuesday", "friday", "saturday", "sunday"
-  ];
+  let dates = [ startDate ];
+  const daysInWeek = 7;
+  for (let i = 1; i < daysInWeek; ++i) {
+    let d = new Date(dates[i - 1].getTime());
+    d.setDate(d.getDate() + 1);
+    dates.push(d);
+  }
+
   let menu = {};
-  for (let dayOfWeek = 0; dayOfWeek < days.length; ++dayOfWeek) {
-    const launch = await parser.getMenu(dayOfWeek, 'launch');
-    const dinner = await parser.getMenu(dayOfWeek, 'dinner');
-    menu[days[dayOfWeek]] = { launch, dinner };
+  for (const date of dates) {
+    const day = (date.getDay() > 1) ? date.getDay() - 1 : 6;
+    const launch = (await parser.getMenu(day, 'launch')).join('; ');
+    const dinner = (await parser.getMenu(day, 'dinner')).join('; ');
+    menu[date.toISOString()] = { launch, dinner };
   }
 
   console.log(menu);
